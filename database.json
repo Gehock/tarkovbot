@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "uid": 150625032656125952,
+      "name": "Gehock",
+      "kills": [
+        {
+          "victim": 387348620841582594,
+          "name": "Gahock",
+          "timestamp": "2020-03-16T03:21",
+          "description": "Misclick"
+        },
+        {
+          "victim": 387348620841582594,
+          "name": "Gahock",
+          "timestamp": "2020-03-16T02:52",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}
