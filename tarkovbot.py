@@ -12,5 +12,9 @@ class Tarkovbot(Bot):
         for extension in extensions:
             self.load_extension(extension)
 
+        @self.check
+        async def globally_block_dms(ctx):
+            return ctx.guild is not None
+
     async def on_ready(self):
         print("Logged in as {}".format(self.user))
