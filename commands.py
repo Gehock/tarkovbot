@@ -206,6 +206,7 @@ class Commands(Cog):
 
         if len(db['entries']) == 0:
             await ctx.send("No logged data")
+            return
 
         events = self._get_list(db)
 
