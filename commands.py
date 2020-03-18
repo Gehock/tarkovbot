@@ -2,6 +2,7 @@ from collections import OrderedDict
 from datetime import datetime
 import json
 import traceback
+from typing import Tuple, List, Dict
 
 from discord.ext.commands import (Cog, command, Context, Bot,
                                   MissingRequiredArgument)
@@ -26,7 +27,7 @@ class Commands(Cog):
                     print("Creating database", DATABASE)
                     json.dump({"entries": []}, f2, indent=2)
 
-    def _stats(self, database: dict) -> dict:
+    def _stats(self, database: dict) -> Tuple[dict, OrderedDict, OrderedDict]:
         entries: list = database['entries']
 
         kills = {}
@@ -169,9 +170,58 @@ class Commands(Cog):
         message = self._create_message("deaths")
         await ctx.send(message)
 
+    def _get_list(self, database) -> List[Dict[str, str]]:
+        entries: list = database['entries']
+
+        events: List[Dict[str, str]] = []
+
+        for entry in entries:
+            killer_name = entry['name']
+
+            for kill in entry['kills']:
+                events.append({
+                    "killer": killer_name,
+                    "victim": kill['name'],
+                    "timestamp": kill['timestamp'],
+                    "description": kill['description'],
+                })
+
+        sorted_events = sorted(events, key=lambda item: item['timestamp'])
+
+        print("events", sorted_events)
+
+        return sorted_events
+
+
+    @command(name="list")
+    async def list_(self, ctx: Context):
+        db = self._read_database()
+
+        if len(db['entries']) == 0:
+            await ctx.send("No logged data")
+
+        events = self._get_list(db)
+
+        message = "**All logged data**\n"
+        for event in events:
+            if len(event['description']) > 0:
+                description = " with description: {}" \
+                    .format(event['description'])
+            else:
+                description = ""
+            message += "`{}`: **{}** killed **{}**{}\n".format(
+                event['timestamp'],
+                event['killer'],
+                event['victim'],
+                description
+            )
+
+        await ctx.send(message)
+
     @log.error
     @kills.error
     @deaths.error
+    @list_.error
     async def error(self, ctx: Context, e: Exception):
         if isinstance(e, MissingRequiredArgument):
             await ctx.send("Missing required argument {}".format(e.param.name))
@@ -191,3 +241,4 @@ if __name__ == "__main__":
     db = c._read_database()
     stats = c._stats(db)
     msg = c._create_message(option="kills")
+    list_ = c._get_list(db)
