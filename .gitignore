@@ -2,3 +2,4 @@ venv
 secret.py
 *.pyc
 .mypy_cache
+database.json
