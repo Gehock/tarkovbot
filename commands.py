@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime
 import json
 import traceback
@@ -12,6 +13,58 @@ DATABASE = 'database.json'
 class Commands(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    def _read_database(self) -> dict:
+        while True:
+            print("loop")
+            try:
+                with open(DATABASE, 'r') as f:
+                    print("opening database")
+                    return json.load(f)
+            except FileNotFoundError:
+                with open(DATABASE, 'w') as f2:
+                    print("Creating database", DATABASE)
+                    json.dump({"entries": []}, f2, indent=2)
+
+    def _stats(self, database: dict) -> dict:
+        entries: list = database['entries']
+
+        kills = {}
+        deaths = {}
+        names = {}
+
+        for entry in entries:
+            killer = entry['uid']
+
+            if killer not in kills:
+                kills[killer] = 0
+            if killer not in names:
+                names[killer] = entry['name']
+
+            for kill in entry['kills']:
+                kills[killer] += 1
+
+                victim = kill['victim']
+
+                if victim not in names:
+                    names[victim] = kill['name']
+
+                if victim not in deaths:
+                    deaths[victim] = 0
+                deaths[victim] += 1
+
+        sorted_kills = OrderedDict(
+            {k: v for k, v in sorted(kills.items(), key=lambda item: item[1],
+                                     reverse=True)})
+        sorted_deaths = OrderedDict(
+            {k: v for k, v in sorted(deaths.items(), key=lambda item: item[1],
+                                     reverse=True)})
+
+        print("names", names)
+        print("kills", sorted_kills)
+        print("deaths", sorted_deaths)
+
+        return names, sorted_kills, sorted_deaths
 
     @command()
     async def log(self, ctx: Context, killer: Member, victim: Member,
@@ -41,34 +94,24 @@ class Commands(Cog):
         killer_name = killer.nick if killer.nick is not None else killer.name
         victim_name = victim.nick if victim.nick is not None else victim.name
         killer_id = killer.id
+        victim_id = victim.id
+        print("killer name", killer_name, killer_id)
+        print("victim name", victim_name, victim_id)
 
-        while True:
-            print("loop")
-            try:
-                with open(DATABASE, 'r') as f:
-                    print("opening database")
-                    database = json.load(f)
-                    break
-                    print("open successful")
-            except FileNotFoundError as e:
-                with open(DATABASE, 'w') as f2:
-                    print("Creating database", DATABASE)
-                    json.dump({"entries": []}, f2, indent=2)
-        print("loop done")
-
-        await ctx.send("```{}```".format(json.dumps(database, indent=2)))
+        database = self._read_database()
 
         entries = database['entries']
         killer_entry = next((
             entry
             for entry in entries
             if entry['uid'] == killer_id
-        ))
+        ), None)
+        print("killer entry", killer_entry)
         if killer_entry is not None:
             entries.remove(killer_entry)
         else:
             killer_entry = {
-                "uid": killer_entry,
+                "uid": killer_id,
                 "name": killer_name,
                 "kills": []
             }
@@ -83,20 +126,48 @@ class Commands(Cog):
         killer_entry['kills'].append(victim_entry)
         database['entries'].append(killer_entry)
 
-        print(database)
+        print("db", database)
 
         with open(DATABASE, 'w') as f:
             json.dump(database, f, indent=2)
 
         await ctx.send("Logged: {} killed {}".format(killer_name, victim_name))
 
+    def _create_message(self, option="kills") -> str:
+        db = self._read_database()
+
+        if len(db['entries']) == 0:
+            return "No {}".format(option)
+
+        names, kills, deaths = self._stats(db)
+
+        if option == "kills":
+            abbreviation = "TKs"
+            dict_ = kills
+        else:
+            abbreviation = "TDs"
+            dict_ = deaths
+
+        i = 1
+        message = "**Most team {}**\n".format(option)
+        for uid, count in dict_.items():
+            message += "{}. {} - {} {}\n".format(
+                i, names[uid], count, abbreviation
+            )
+            i += 1
+
+        return message
+
     @command()
     async def kills(self, ctx: Context):
-        await ctx.send("No kills")
+        message = self._create_message("kills")
+        await ctx.send(message)
+
 
     @command()
     async def deaths(self, ctx: Context):
-        await ctx.send("No deaths")
+        message = self._create_message("deaths")
+        await ctx.send(message)
 
     @log.error
     @kills.error
@@ -113,3 +184,10 @@ class Commands(Cog):
 
 def setup(bot):
     bot.add_cog(Commands(bot))
+
+
+if __name__ == "__main__":
+    c = Commands(None)
+    db = c._read_database()
+    stats = c._stats(db)
+    msg = c._create_message(option="kills")
