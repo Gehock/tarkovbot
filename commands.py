@@ -71,7 +71,7 @@ class Commands(Cog):
     async def log(self, ctx: Context, killer: Member, victim: Member,
                   *, description: str = ""):
         """
-        Logs a single kill to the database.
+        Logs a single kill to the database
 
         Database format:
         {
@@ -152,7 +152,7 @@ class Commands(Cog):
         i = 1
         message = "**Most team {}**\n".format(option)
         for uid, count in dict_.items():
-            message += "{}. {} - {} {}\n".format(
+            message += "`{}.` {} - {} {}\n".format(
                 i, names[uid], count, abbreviation
             )
             i += 1
@@ -161,12 +161,17 @@ class Commands(Cog):
 
     @command()
     async def kills(self, ctx: Context):
+        """
+        Lists team kill counters
+        """
         message = self._create_message("kills")
         await ctx.send(message)
 
-
     @command()
     async def deaths(self, ctx: Context):
+        """
+        Lists team death counters
+        """
         message = self._create_message("deaths")
         await ctx.send(message)
 
@@ -192,9 +197,11 @@ class Commands(Cog):
 
         return sorted_events
 
-
     @command(name="list")
     async def list_(self, ctx: Context):
+        """
+        Shows a list of all logged data
+        """
         db = self._read_database()
 
         if len(db['entries']) == 0:
@@ -231,6 +238,7 @@ class Commands(Cog):
                            "```{}```"
                            .format(traceback.format_exc()))
             traceback.print_exc()
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))
