@@ -5,7 +5,8 @@ import traceback
 from typing import Tuple, List, Dict
 
 from discord.ext.commands import (Cog, command, Context, Bot,
-                                  MissingRequiredArgument)
+                                  MissingRequiredArgument, guild_only,
+                                  BadArgument)
 from discord import Member
 
 DATABASE = 'database.json'
@@ -67,6 +68,7 @@ class Commands(Cog):
 
         return names, sorted_kills, sorted_deaths
 
+    @guild_only()
     @command()
     async def log(self, ctx: Context, killer: Member, victim: Member,
                   *, description: str = ""):
@@ -234,6 +236,9 @@ class Commands(Cog):
         if isinstance(e, MissingRequiredArgument):
             await ctx.send("Missing required argument {}".format(e.param.name))
             await ctx.send_help(ctx.command)
+        elif isinstance(e, BadArgument):
+            await ctx.send("Invalid argument: {}. See: `!help {}`"
+                           .format(e, ctx.command))
         else:
             await ctx.send("An error occured while executing command: "
                            "```{}```"
