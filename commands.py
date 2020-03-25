@@ -6,7 +6,7 @@ from typing import Tuple, List, Dict
 
 from discord.ext.commands import (Cog, command, Context, Bot,
                                   MissingRequiredArgument, guild_only,
-                                  BadArgument)
+                                  BadArgument, NoPrivateMessage)
 from discord import Member
 
 DATABASE = 'database.json'
@@ -241,8 +241,10 @@ class Commands(Cog):
             await ctx.send("Missing required argument {}".format(e.param.name))
             await ctx.send_help(ctx.command)
         elif isinstance(e, BadArgument):
-            await ctx.send("Invalid argument: {}. See: `!help {}`"
-                           .format(e, ctx.command))
+            await ctx.send("Invalid argument: {}".format(e))
+            await ctx.send_help(ctx.command)
+        elif isinstance(e, NoPrivateMessage):
+            await ctx.send("Error: {}".format(e))
         else:
             await ctx.send("An error occured while executing command: "
                            "```{}```"
