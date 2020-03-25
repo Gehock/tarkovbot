@@ -75,6 +75,10 @@ class Commands(Cog):
         """
         Logs a single kill to the database
 
+        <killer> and <victim> can either be: numeric ID, @mention, nickname in quotes, username or username#discriminator
+        """
+
+        """
         Database format:
         {
             "entries": [
