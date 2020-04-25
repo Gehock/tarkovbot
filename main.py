@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from secret import TOKEN
 from tarkovbot import Tarkovbot
 
