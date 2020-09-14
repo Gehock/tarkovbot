@@ -75,7 +75,9 @@ class Commands(Cog):
         """
         Logs a single kill to the database
 
-        <killer> and <victim> can either be: numeric ID, @mention, nickname in quotes, username or username#discriminator
+        <killer> and <victim> can either be: numeric ID, @mention, nickname, username or username#discriminator
+
+        Note: If the nickname or username contains whitespace, it has to be enclosed in quotes.
         """
 
         """
